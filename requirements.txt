@@ -1,0 +1,10 @@
+websockets
+asyncio
+regex
+cloudscraper
+browser_cookie3
+colorama
+win10toast
+twocaptcha
+discord_webhook
+requests

@@ -1,0 +1,66 @@
+function lord() {
+let socket = new WebSocket("wss://rblxwild.com/socket.io/?EIO=4&transport=websocket");
+authtoken = "Paste Auth Here"
+socket.onopen = function(e) {
+
+};
+socket.onmessage = function(event) {
+if (!(event.data.includes("syncResponse"))) console.log(event.data)
+    if (event.data.startsWith("0")) {
+        socket.send("40")
+    }
+    if (event.data.startsWith("40")) {
+        socket.send(`42["authentication",{"authToken":"${authtoken}","clientTime":${Date.now()}}]`)
+        setTimeout(() => {
+            function keepalive() {
+                socket.send(`42["time:requestSync",{"clientTime":${Date.now()}}]`)
+                setTimeout(() => {
+                    keepalive()
+                }, 1000);
+            }
+            keepalive()
+        }, 3000);
+    }
+    
+
+
+    if (event.data.startsWith(`42["authenticationResponse"`)) {
+        socket.send(`42["casebattles:subscribe"]`)
+    }
+    if (event.data.startsWith(`42["casebattles:pushGame`)) {
+        pushedBattle = JSON.parse(event.data.replace("42", ""))[1]
+        if (pushedBattle.betAmount * 0.2 <= pushedBattle.funding) {
+            console.log(`Found game: \nID: ${pushedBattle.id}\nType: ${pushedBattle.versusType}\nBet amount: ${pushedBattle.betAmount}\nFunding amount: ${pushedBattle.funding}`)
+            if (pushedBattle.versusType == "2v2") {
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":2,"seatIndex":0}]`)
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":1,"seatIndex":1}]`)
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":2,"seatIndex":1}]`)
+            }
+            if (pushedBattle.versusType == "1v1") {
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":2,"seatIndex":0}]`)
+            }
+            if (pushedBattle.versusType == "1v1v1") {
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":3,"seatIndex":0}]`)
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":2,"seatIndex":0}]`)
+            }
+            if (pushedBattle.versusType == "1v1v1v1") {
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":3,"seatIndex":0}]`)
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":2,"seatIndex":0}]`)
+                socket.send(`42["casebattles:join",{"gameId":${pushedBattle.id},"teamId":4,"seatIndex":0}]`)
+            }
+        }
+    }
+};
+
+socket.onclose = function(event) {
+console.log("Lord Rule RblxWild")
+  ws.close()
+  lord()
+};
+
+socket.onerror = function(error) {
+  console.log(`[error]`)
+  lord()
+};
+}
+lord()
